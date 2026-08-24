@@ -1,118 +1,95 @@
-import random
+# 게임의 진입점(entry point)
+# 게임 루프 실행, 키보드 입력 처리, 상태 전환을 담당
+# 실제 게임 로직은 snake_game.py, 화면 그리기는 renderer.py에 위임
 
 import pygame
 import sys
+from settings import CELL_SIZE, ROWS, COLS, FPS_INIT
+from game_logic import reset, update
+from renderer import Renderer
+from leaderboard import save_score, get_top10
 
 pygame.init()
-
-CELL_SIZE = 20
-COLS = 40
-ROWS = 30
-
-BACKGROUND_COLOR = (230, 230, 255)
-SNAKE_COLOR = (39, 99, 31)
-APPLE_COLOR = (200, 10, 10)
-
-FPS_INIT = 10
-
 screen = pygame.display.set_mode((COLS * CELL_SIZE, ROWS * CELL_SIZE))
 pygame.display.set_caption("Snake")
-clock = pygame.time.Clock()
-start_x = random.randint(3, COLS - 5)
-start_y = random.randint(3, ROWS - 5)
-direc_x = random.randint(-1, 1)
-arr = [-1, 1]
-apple = (COLS - 1, ROWS // 2 - 1)
-score = 0
-font = pygame.font.SysFont(None, 36)
-state = "PLAY"
+clock    = pygame.time.Clock()
+renderer = Renderer(screen)
 
-if direc_x != 0:
-    direc_y = 0
-else:
-    direc_y = arr[random.randint(0, 1)]
+MAX_NAME_LEN = 12
+repeat = 0
 
-snake = [(start_x, start_y), (start_x - direc_x, start_y - direc_y), (start_x - direc_x * 2, start_y - direc_y * 2), (start_x - direc_x * 3, start_y - direc_y * 3), (start_x - direc_x * 4, start_y - direc_y * 4)]
-direction = (direc_x, direc_y)
-
-# 로직 함수 구현
-# 먹이 생성
-def spawn_apple(snake : list):
-    global apple
-    while True:
-        # 랜덤 좌표
-        apple = (random.randint(0, COLS - 1), random.randint(0, ROWS - 1))
-        if apple not in snake:
-            break
-
-# 리셋 함수 구현
-def reset():
-    global snake
-    global direction
-    global apple
-    global state
-    snake = [(start_x, start_y), (start_x - direc_x, start_y - direc_y), (start_x - direc_x * 2, start_y - direc_y * 2), (start_x - direc_x * 3, start_y - direc_y * 3), (start_x - direc_x * 4, start_y - direc_y * 4)]
-    direction = (direc_x, direc_y)
-    apple = (COLS - 1, ROWS // 2 - 1)
-    state = "PLAY"
+snake, direction, food, score = reset()
+state = "PLAY"  # 게임 상태: "PLAY" 또는 "DEAD"
+nickname = "" 
+ranking = []
 
 while True:
-    print("state : ", state)
-    # 1. 이벤트 처리
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if event.type == pygame.KEYDOWN :
-            if event.key == pygame.K_RIGHT and direction != (-1, 0):
-                direction = (1, 0)
-            if event.key == pygame.K_DOWN and direction != (0, -1):
-                direction = (0, 1)
-            if event.key == pygame.K_LEFT and direction != (1, 0):
-                direction = (-1, 0)
-            if event.key == pygame.K_UP and direction != (0, 1):
-                direction = (0, -1)
-        if state == "DEAD":
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    state == "PLAY"
-                    reset()
 
-    # 2. 게임 로직 업뎃
-    if state == "PLAY":
-        head_x, head_y = snake[0]
-        new_head = (head_x + direction[0], head_y + direction[1])
-        
-        if new_head in snake:
-            state = "DEAD"
+        if event.type == pygame.KEYDOWN:
+            if state == "PLAY":
+                # 반대 방향 입력은 무시 (예: 오른쪽 이동 중 왼쪽 입력 차단)
+                # direction 튜플: (1,0)=오른쪽, (-1,0)=왼쪽, (0,-1)=위, (0,1)=아래
+                # 주의: 한 프레임에 방향키를 두 번 빠르게 누르면 반대 방향 체크를
+                #        우회해 자기 몸을 뚫을 수 있는 버그가 있음
+                if event.key == pygame.K_UP    and direction != (0, 1):
+                    direction = (0, -1)
+                if event.key == pygame.K_DOWN  and direction != (0, -1):
+                    direction = (0, 1)
+                if event.key == pygame.K_LEFT  and direction != (1, 0):
+                    direction = (-1, 0)
+                if event.key == pygame.K_RIGHT and direction != (-1, 0):
+                    direction = (1, 0)
+
+            # # DEAD 상태에서 스페이스바를 누르면 게임 재시작
+            # if state == "DEAD" and event.key == pygame.K_SPACE:
+            #     snake, direction, food, score = reset()
+            #     state = "PLAY"
             
-        snake.insert(0, new_head)
-        if new_head == apple:
-            spawn_apple(snake)
-            score += 1
-        else:
-            snake.pop()
-        
-        if new_head[0] == -1 or new_head[0] == COLS or new_head[1] == -1 or new_head[1] == ROWS:
-            state = "DEAD"
+            elif state == "NAME":
+                speed = 1000
+                if event.key == pygame.K_RETURN:
+                    name = nickname.strip() or "Player"
+                    save_score(name, score)
+                    ranking = get_top10()
+                    state = "RANK"
+                elif event.key == pygame.K_ESCAPE:
+                    ranking = get_top10()
+                    state = "RANK"
+                elif event.key == pygame.K_BACKSPACE:
+                    nickname = nickname[:-1]
+                elif len(nickname) < MAX_NAME_LEN and event.unicode.isprintable():
+                    nickname += event.unicode
 
-        # if new_head[0] == -1:
-        #     new_head[0] = (COLS - 1, )
+            elif state == "RANK":
+                if event.key == pygame.K_SPACE:
+                    snake, direction, food, score = reset()
+                    nickname = "" 
+                    state = "PLAY"
+                    
 
+    if state == "PLAY":
+        snake, food, score, alive = update(snake, direction, food, score)
 
-    # 3. 화면 그리기
-    screen.fill(BACKGROUND_COLOR)
-    for x, y in snake:
-        pygame.draw.rect(screen, SNAKE_COLOR, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-    pygame.draw.rect(screen, APPLE_COLOR, (apple[0] * CELL_SIZE, apple[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        if not alive:
+            state = "NAME"
 
-    score_text = font.render(f"Score: {score}", True, (255, 255, 255), (0, 0, 0)) #font.render(str, 글씨 가장 자리 부드럽게?, color, background_color)
-    screen.blit(score_text, (5, 5))
+    if state == "PLAY" :
+        renderer.draw(snake, food, score)
+    elif state == "NAME":
+        renderer.draw_name_input(score, nickname)
+    elif state == "RANK":
 
-    if state == "DEAD":
-        over_text = font.render("Game Over! SPACE to restart", False, (255, 255, 255), (0, 0, 0))
-        screen.blit(over_text, ((ROWS * CELL_SIZE) // 2 - 60, (COLS * CELL_SIZE) // 2 - 150))
+        renderer.draw_ranking(ranking, score, repeat)
+        repeat += 1
 
-    pygame.display.flip()
-    clock.tick(FPS_INIT + score // 5)
+    pygame.display.flip()  # 버퍼에 그린 내용을 실제 화면에 출력
 
+    # 점수에 따라 속도 증가: 5점마다 1 FPS씩 빨라짐
+    # 예) 점수 0 → 10 FPS, 점수 10 → 12 FPS, 점수 50 → 20 FPS
+    if score <= 100:
+        speed = FPS_INIT + score // 5
+    clock.tick(speed)  # 지정한 FPS를 초과하지 않도록 루프 속도 제한
