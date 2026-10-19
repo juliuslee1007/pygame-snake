@@ -8,12 +8,14 @@ from settings import CELL_SIZE, ROWS, COLS, FPS_INIT
 from game_logic import reset, update
 from renderer import Renderer
 from leaderboard import save_score, get_top10
+from music_player import Music_Player
 
 pygame.init()
 screen = pygame.display.set_mode((COLS * CELL_SIZE, ROWS * CELL_SIZE))
 pygame.display.set_caption("Snake")
 clock    = pygame.time.Clock()
 renderer = Renderer(screen)
+music_player = Music_Player(pygame.mixer)
 
 MAX_NAME_LEN = 12
 repeat = 0
@@ -72,7 +74,9 @@ while True:
                     
 
     if state == "PLAY":
-        snake, food, score, alive = update(snake, direction, food, score)
+        snake, food, score, alive, eat_apple = update(snake, direction, food, score)
+
+        music_player.eat_food(eat_apple)
 
         if not alive:
             state = "NAME"
@@ -85,6 +89,7 @@ while True:
 
         renderer.draw_ranking(ranking, score, repeat)
         repeat += 1
+
 
     pygame.display.flip()  # 버퍼에 그린 내용을 실제 화면에 출력
 

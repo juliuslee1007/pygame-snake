@@ -1,1 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+
+# macOS metadata files
+._*
+.DS_Store
+
+# Local environment and secrets
 .env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Build outputs
+build/
+dist/
+*.spec
+
+# Standalone music demo and unused alternate tracks
+bgm_demo.py
+assets/snakebgm2.mp3
+assets/snakebgm2.m4a

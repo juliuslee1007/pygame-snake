@@ -12,21 +12,54 @@ class Renderer:
         self.font = pygame.font.SysFont(None, 36)
         self.small = pygame.font.SysFont(None, 12)
         self.middlesmall = pygame.font.SysFont(None, 24)
+        try:
+            self.apple = pygame.image.load("assets/sprites/apple.png")
+            self.apple = pygame.transform.scale(self.apple, (32, 32))
+        except FileNotFoundError as e:
+            print("apple", e)
+            self.apple = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
+            self.apple.fill(APPLE_COLOR)
+        self.snake_body = pygame.image.load("assets/sprites/snake_body.png")
+        self.snake_body = pygame.transform.scale(self.snake_body, (20, 20))
+        self.snake_head = pygame.image.load("assets/sprites/snake_head.png")
+        self.snake_head = pygame.transform.scale(self.snake_head, (20, 20))
+        self.snake_tail = pygame.image.load("assets/sprites/snake_tail.png")
+        self.snake_tail = pygame.transform.scale(self.snake_tail, (20, 20))
+        self.snake_corner = pygame.image.load("assets/sprites/snake_corner.png")
+        self.snake_corner = pygame.transform.scale(self.snake_corner, (20, 20))
 
     def draw(self, snake, food, score):
         # 매 프레임 전체를 검은색으로 지우고 다시 그림 (플리커 방지)
         self.screen.fill(BACKGROUND_COLOR)
 
+        snake_head = self.snake_head.get_rect(topleft=(snake[0][0] * CELL_SIZE, snake[0][1] * CELL_SIZE))
+        rotated_h = pygame.transform.rotate(self.snake_head, snake[0][2] * 90)
+        self.screen.blit(rotated_h, snake_head)
+        snake_tail = self.snake_tail.get_rect(topleft=(snake[-1][0] * CELL_SIZE, snake[-1][1] * CELL_SIZE))
+        rotated_t = pygame.transform.rotate(self.snake_tail, snake[-2][2] * 90)
+        self.screen.blit(rotated_t, snake_tail)
+
         # 뱀의 각 칸을 셀 좌표 → 픽셀 좌표로 변환해서 그림
         # 예: (3, 5) → 픽셀 (3*20, 5*20) = (60, 100)
-        for x, y in snake:
-            pygame.draw.rect(self.screen, SNAKE_COLOR,
-                             (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-            self.mouth_open(food, snake)
+        f_dir = snake[0][2]
+        for x, y, dir in snake[1:-1:]:
+            if f_dir == dir:
+                snake_body = self.snake_body.get_rect(topleft=(x * CELL_SIZE, y * CELL_SIZE))
+                rotated_b = pygame.transform.rotate(self.snake_body, dir * 90)
+                self.screen.blit(rotated_b, snake_body)
+            else:
+                snake_corner = self.snake_corner.get_rect(topleft=(x * CELL_SIZE, y * CELL_SIZE))
+                if f_dir > dir:
+                    rotated_c = pygame.transform.rotate(self.snake_corner, (dir - (abs(dir - f_dir) % 3)) * 90)
+                else:
+                    rotated_c = pygame.transform.rotate(self.snake_corner, ((f_dir + dir) / 2 + 0.5) * 90)
+                self.screen.blit(rotated_c, snake_corner)
+            f_dir = dir
+            # self.mouth_open(food, snake)
 
         # 음식 그리기
-        pygame.draw.rect(self.screen, APPLE_COLOR,
-                         (food[0] * CELL_SIZE, food[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+        apple = self.apple.get_rect(center=(food[0] * CELL_SIZE + (CELL_SIZE) // 2, food[1] * CELL_SIZE + (CELL_SIZE) // 3))
+        self.screen.blit(self.apple, apple)
 
         # 점수를 좌측 상단에 표시
         score_text = self.font.render(f"Score: {score}", True, (0,0,0))

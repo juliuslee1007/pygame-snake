@@ -21,6 +21,17 @@
 - `python-dotenv`
   - `.env` 파일에서 `SUPABASE_URL`, `SUPABASE_ANON_KEY` 로드
 
+## 설치 및 실행
+
+`snake` 폴더에서 아래 명령을 실행합니다.
+
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
+Supabase 랭킹을 사용하려면 `.env` 파일에 `SUPABASE_URL`과 `SUPABASE_ANON_KEY`를 설정합니다. `.env`는 비밀 정보가 포함될 수 있어 Git에 올리지 않습니다. 설정이 없어도 게임은 실행되며 랭킹 저장·조회만 비활성화됩니다.
+
 ## 화면 흐름
 
 1. 게임 시작
@@ -42,8 +53,10 @@
 - `main.py` - 게임 실행 진입점, 상태 전환, 입력 처리
 - `game_logic.py` - 뱀 이동, 먹이 생성, 충돌 판정
 - `renderer.py` - 게임 화면과 텍스트 렌더링
+- `music_player.py` - 배경 음악과 먹이 효과음
 - `leaderboard.py` - Supabase 점수 저장 및 조회
 - `settings.py` - 화면 크기, 색상, FPS 설정
+- `assets/` - 게임 스프라이트와 실행에 필요한 음악·효과음
 
 ## 참고
 
