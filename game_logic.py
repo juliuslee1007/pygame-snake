@@ -8,7 +8,10 @@ def spawn_apple(snake : list):
     while True:
         # 랜덤 좌표
         apple = (random.randint(0, COLS - 1), random.randint(0, ROWS - 1))
-        if apple not in tuple(snake[:2]):
+        # if apple not in tuple(snake[:2:]):
+        #     return apple
+
+        if apple not in [(x, y) for  x, y, d in snake]:
             return apple
 
 def convert_dir(dir_x, dir_y):
@@ -42,12 +45,14 @@ def update(snake, direction, apple, score):
     반환값:(snake, food, score, alive)
         allive = False 이면 게임 오버
     """
-    head_x, head_y, direc = snake[0]
+    head_x, head_y = snake[0][0], snake[0][1]
     new_head = (head_x + direction[0], head_y + direction[1], convert_dir(direction[0], direction[1]))
     
-    if new_head in snake:
+    if (new_head[:2:]) in [(x, y) for x, y, d in snake]:
+        print("내 몸")
         return snake, apple, score, False, False
-    if new_head[0] == -1 or new_head[0] == COLS or new_head[1] == -1 or new_head[1] == ROWS:
+    elif new_head[0] == -1 or new_head[0] == COLS or new_head[1] == -1 or new_head[1] == ROWS:
+        print("벽!")
         return snake, apple, score, False, False
        
     snake.insert(0, new_head)

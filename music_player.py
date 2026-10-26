@@ -8,7 +8,7 @@ class Music_Player:
         self.paused = False
         self.running = True
         self.eat_sound = self.mixer.Sound("assets/apple_eat.wav")
-        self.eat_sound.set_volume(0.8)
+        self.eat_sound.set_volume(1.2)
 
     def eat_food(self):
         self.eat_sound.play()

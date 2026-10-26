@@ -39,12 +39,16 @@ while True:
                 #        우회해 자기 몸을 뚫을 수 있는 버그가 있음
                 if event.key == pygame.K_UP    and direction != (0, 1):
                     direction = (0, -1)
-                if event.key == pygame.K_DOWN  and direction != (0, -1):
+                    print("상")
+                elif event.key == pygame.K_DOWN  and direction != (0, -1):
                     direction = (0, 1)
-                if event.key == pygame.K_LEFT  and direction != (1, 0):
+                    print("하")
+                elif event.key == pygame.K_LEFT  and direction != (1, 0):
                     direction = (-1, 0)
-                if event.key == pygame.K_RIGHT and direction != (-1, 0):
+                    print("좌")
+                elif event.key == pygame.K_RIGHT and direction != (-1, 0):
                     direction = (1, 0)
+                    print("우")
 
             # # DEAD 상태에서 스페이스바를 누르면 게임 재시작
             # if state == "DEAD" and event.key == pygame.K_SPACE:
@@ -76,7 +80,8 @@ while True:
     if state == "PLAY":
         snake, food, score, alive, eat_apple = update(snake, direction, food, score)
 
-        music_player.eat_food(eat_apple)
+        if eat_apple :
+            music_player.eat_food()
 
         if not alive:
             state = "NAME"
